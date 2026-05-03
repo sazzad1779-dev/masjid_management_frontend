@@ -1,26 +1,82 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-primary: #065F46;
+  --color-primary-hover: #044e3a;
+  --color-primary-container: #065f46;
+  --color-on-primary-container: #8bd6b7;
+  
+  --color-background: #f9f9ff;
+  --color-surface: #ffffff;
+  --color-surface-variant: #d8e3fb;
+  
+  --color-text-primary: #111c2d;
+  --color-text-secondary: #3f4944;
+  --color-text-muted: #6f7973;
+  
+  --color-accent-gold: #D4AF37;
+  --color-accent-mint: #ECFDF5;
+  
+  --radius-primary: 8px;
+  --radius-card: 12px;
+  
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-plus-jakarta-sans);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  --background: #f9f9ff;
+  --foreground: #111c2d;
+  
+  --primary: #065F46;
+  --on-primary: #ffffff;
+  
+  --surface: #ffffff;
+  --on-surface: #111c2d;
+  --on-surface-variant: #3f4944;
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-plus-jakarta-sans), sans-serif;
+  letter-spacing: -0.01em;
+}
+
+.login-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0px 4px 20px rgba(30, 41, 59, 0.05);
+}
+
+.primary-button {
+  background-color: var(--primary);
+  color: white;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.primary-button:hover {
+  background-color: #044e3a;
+  transform: translateY(-1px);
+}
+
+.input-field {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  width: 100%;
+  transition: all 0.2s ease;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(236, 253, 245, 1);
 }
