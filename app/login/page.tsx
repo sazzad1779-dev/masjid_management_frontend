@@ -1,11 +1,71 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    // Check for message in URL on mount
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const msg = params.get("message");
+      if (msg) {
+        setSuccessMessage(msg);
+        // Optional: clear the url without refreshing
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+  }, []);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccessMessage(null);
+    setLoading(true);
+
+    try {
+      const formData = new URLSearchParams();
+      formData.append("username", email);
+      formData.append("password", password);
+
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+
+      const response = await fetch(`${API_BASE_URL}/auth/login/access-token`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: formData.toString(),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.detail || "Login failed - please check your credentials");
+      }
+
+      const data = await response.json();
+      localStorage.setItem("token", data.access_token);
+      localStorage.setItem("refresh_token", data.refresh_token);
+      
+      router.push("/dashboard");
+
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-slate-50">
       <div className="w-full mx-auto max-w-md">
         {/* Branding */}
         <div className="text-center mb-10">
@@ -18,7 +78,7 @@ export default function LoginPage() {
         </div>
 
         {/* Login Card */}
-        <div className="login-card p-8 md:p-10">
+        <div className="login-card p-8 md:p-10 bg-white shadow-sm rounded-xl border border-slate-200">
           <div className="mb-8">
             <h2 className="text-2xl font-semibold text-text-primary mb-2">
               Secure Portal Access
@@ -28,7 +88,19 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <form className="space-y-6">
+          {successMessage && (
+            <div className="mb-6 p-4 bg-green-50 text-green-600 rounded-lg text-sm font-medium border border-green-100">
+              {successMessage}
+            </div>
+          )}
+
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-lg text-sm font-medium border border-red-100">
+              {error}
+            </div>
+          )}
+
+          <form className="space-y-6" onSubmit={handleLogin}>
             <div>
               <label
                 htmlFor="email"
@@ -40,7 +112,9 @@ export default function LoginPage() {
                 id="email"
                 type="text"
                 placeholder="admin@masjid.org"
-                className="input-field"
+                className="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-primary focus:border-primary"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
@@ -64,7 +138,9 @@ export default function LoginPage() {
                 id="password"
                 type="password"
                 placeholder="••••••••"
-                className="input-field"
+                className="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-primary focus:border-primary"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 required
               />
             </div>
@@ -73,7 +149,7 @@ export default function LoginPage() {
               <input
                 id="remember-me"
                 type="checkbox"
-                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
               />
               <label
                 htmlFor="remember-me"
@@ -85,9 +161,10 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              className="w-full primary-button flex justify-center items-center"
+              disabled={loading}
+              className={`w-full primary-button flex justify-center items-center py-2.5 rounded-lg bg-primary text-white font-semibold hover:bg-primary/90 transition-colors ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
-              Sign In
+              {loading ? "Signing in..." : "Sign In"}
             </button>
           </form>
 

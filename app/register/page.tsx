@@ -1,9 +1,67 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { api } from "../lib/api";
 
 export default function RegisterPage() {
+  const router = useRouter();
+
+  const [formData, setFormData] = useState({
+    institutionName: "",
+    adminName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+
+    // Basic validation
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      // We send additional data now that the backend accepts it
+      await api.post("/auth/signup", {
+        email: formData.email,
+        password: formData.password,
+        institution_name: formData.institutionName,
+        admin_name: formData.adminName,
+      });
+
+      setSuccess("Institution registered successfully! Redirecting to login...");
+      
+      // Redirect to login after 2 seconds
+      setTimeout(() => {
+        router.push("/login?message=Registration%20successful.%20Please%20log%20in.");
+      }, 2000);
+      
+    } catch (err: any) {
+      setError(err.message || "An error occurred during registration.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.id]: e.target.value,
+    }));
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 py-12">
       <div className="w-full mx-auto max-w-md">
@@ -28,36 +86,54 @@ export default function RegisterPage() {
             </p>
           </div>
 
-          <form className="space-y-5">
+          <form className="space-y-5" onSubmit={handleSubmit}>
+            {error && (
+              <div className="bg-red-50 text-red-500 p-3 rounded text-sm text-center">
+                {error}
+              </div>
+            )}
+            
+            {success && (
+              <div className="bg-green-50 text-green-600 p-3 rounded text-sm text-center font-medium">
+                {success}
+              </div>
+            )}
+
             <div>
               <label
-                htmlFor="institution-name"
+                htmlFor="institutionName"
                 className="block text-sm font-semibold text-text-primary mb-1.5"
               >
                 Institution Name
               </label>
               <input
-                id="institution-name"
+                id="institutionName"
                 type="text"
+                value={formData.institutionName}
+                onChange={handleChange}
                 placeholder="e.g. Al-Falah Islamic Center"
                 className="input-field"
                 required
+                disabled={loading || !!success}
               />
             </div>
 
             <div>
               <label
-                htmlFor="admin-name"
+                htmlFor="adminName"
                 className="block text-sm font-semibold text-text-primary mb-1.5"
               >
                 Administrator Name
               </label>
               <input
-                id="admin-name"
+                id="adminName"
                 type="text"
+                value={formData.adminName}
+                onChange={handleChange}
                 placeholder="Full Name"
                 className="input-field"
                 required
+                disabled={loading || !!success}
               />
             </div>
 
@@ -71,9 +147,12 @@ export default function RegisterPage() {
               <input
                 id="email"
                 type="email"
+                value={formData.email}
+                onChange={handleChange}
                 placeholder="contact@masjid.org"
                 className="input-field"
                 required
+                disabled={loading || !!success}
               />
             </div>
 
@@ -87,34 +166,43 @@ export default function RegisterPage() {
               <input
                 id="password"
                 type="password"
+                value={formData.password}
+                onChange={handleChange}
                 placeholder="••••••••"
                 className="input-field"
                 required
+                disabled={loading || !!success}
               />
             </div>
 
             <div>
               <label
-                htmlFor="confirm-password"
+                htmlFor="confirmPassword"
                 className="block text-sm font-semibold text-text-primary mb-1.5"
               >
                 Confirm Password
               </label>
               <input
-                id="confirm-password"
+                id="confirmPassword"
                 type="password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
                 placeholder="••••••••"
                 className="input-field"
                 required
+                disabled={loading || !!success}
               />
             </div>
 
             <div className="pt-2">
               <button
                 type="submit"
-                className="w-full primary-button flex justify-center items-center py-3"
+                disabled={loading || !!success}
+                className={`w-full flex justify-center items-center py-3 ${
+                  loading || !!success ? "bg-primary/70 cursor-not-allowed text-white rounded-lg font-medium" : "primary-button"
+                }`}
               >
-                Sign Up
+                {loading ? "Registering..." : "Sign Up"}
               </button>
             </div>
           </form>
@@ -147,3 +235,4 @@ export default function RegisterPage() {
     </div>
   );
 }
+

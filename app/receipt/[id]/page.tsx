@@ -1,15 +1,39 @@
-export default function ReceiptPage({ params }: { params: { id: string } }) {
-  const receiptData = {
-    receiptNo: `MMS-2024-${params.id.padStart(4, '0')}`,
-    date: "May 03, 2024",
-    donorName: "Abdullah Ali",
-    amount: "$500.00",
-    category: "General Masjid Maintenance",
-    paymentMethod: "Bank Transfer",
-    masjidName: "Al-Noor Islamic Center",
-    masjidAddress: "123 Faith Street, Springfield",
-    masjidTaxId: "TX-998877665",
-  };
+"use client";
+
+import { useEffect, useState, use } from "react";
+import { api } from "../../lib/api";
+
+interface ReceiptParams {
+  id: string;
+}
+
+export default function ReceiptPage({ params }: { params: Promise<ReceiptParams> }) {
+  const unwrappedParams = use(params);
+  const [receiptData, setReceiptData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchReceipt = async () => {
+      try {
+        const data = await api.get(`/income/${unwrappedParams.id}`);
+        setReceiptData(data);
+      } catch (err: any) {
+        setError(err.message || "Failed to fetch receipt details.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchReceipt();
+  }, [unwrappedParams.id]);
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center text-zinc-500">Loading receipt...</div>;
+  }
+
+  if (error || !receiptData) {
+    return <div className="min-h-screen flex items-center justify-center text-red-500 font-medium">{error || "Receipt not found."}</div>;
+  }
 
   return (
     <div className="min-h-screen bg-zinc-100 py-12 px-4 flex justify-center font-sans">
@@ -20,14 +44,14 @@ export default function ReceiptPage({ params }: { params: { id: string } }) {
         {/* Header */}
         <div className="relative z-10 flex justify-between items-start mb-12">
           <div>
-            <h1 className="text-3xl font-black text-zinc-900 tracking-tight uppercase">{receiptData.masjidName}</h1>
-            <p className="text-zinc-500 font-medium mt-1">{receiptData.masjidAddress}</p>
-            <p className="text-zinc-400 text-sm">Tax ID: {receiptData.masjidTaxId}</p>
+            <h1 className="text-3xl font-black text-zinc-900 tracking-tight uppercase">MASJID/INSTITUTION</h1>
+            <p className="text-zinc-500 font-medium mt-1">123 Faith Street, Springfield</p>
+            <p className="text-zinc-400 text-sm">Tax ID: TX-998877665</p>
           </div>
           <div className="text-right">
             <div className="bg-zinc-900 text-white px-4 py-2 rounded font-bold text-sm uppercase tracking-widest mb-2">Receipt</div>
-            <p className="text-zinc-500 text-sm font-bold">No: {receiptData.receiptNo}</p>
-            <p className="text-zinc-500 text-sm">Date: {receiptData.date}</p>
+            <p className="text-zinc-500 text-sm font-bold">No: MMS-{receiptData.id.split('-')[0]}</p>
+            <p className="text-zinc-500 text-sm">Date: {receiptData.income_date}</p>
           </div>
         </div>
 
@@ -37,12 +61,15 @@ export default function ReceiptPage({ params }: { params: { id: string } }) {
         <div className="space-y-8 mb-16">
           <div className="grid grid-cols-2 gap-8">
             <div>
-              <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-1">Donor Name</p>
-              <p className="text-lg font-bold text-zinc-900">{receiptData.donorName}</p>
+              <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-1">Donor Information</p>
+              <p className="text-lg font-bold text-zinc-900">{receiptData.source || 'Anonymous Donor'}</p>
+              <p className="text-sm font-medium text-zinc-600 mt-1">{receiptData.title}</p>
             </div>
             <div>
               <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-1">Amount Paid</p>
-              <p className="text-3xl font-black text-emerald-600 tracking-tighter">{receiptData.amount}</p>
+              <p className="text-3xl font-black text-emerald-600 tracking-tighter">
+                {new Intl.NumberFormat('en-US', { style: 'currency', currency: receiptData.currency || 'USD' }).format(receiptData.amount)}
+              </p>
             </div>
           </div>
 
@@ -53,7 +80,7 @@ export default function ReceiptPage({ params }: { params: { id: string } }) {
             </div>
             <div>
               <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-1">Payment Method</p>
-              <p className="text-base font-bold text-zinc-700">{receiptData.paymentMethod}</p>
+              <p className="text-base font-bold text-zinc-700">{receiptData.payment_method}</p>
             </div>
           </div>
         </div>
